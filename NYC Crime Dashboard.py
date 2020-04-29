@@ -5,25 +5,37 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import numpy as np
 
+
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets = external_stylesheets)
+tod = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYPD_Complaint_Data_Clean.csv')
+tod_count = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYPD_Complaint_Data_Count.csv')
+income = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYC_Income_Arrests.csv')
+pop = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYC_Population_vs_Arrests.csv')
+edu = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYC_Crime_vs_Education.csv')
+edu = edu.groupby('Borough').median()
+edu.reset_index(inplace=True)
+locations = np.arange(edu.shape[0])
 
-df = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYPD_Complaint_Data_Clean.csv')
-df_count = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYPD_Complaint_Data_Count.csv')
+
 
 app.layout = html.Div([
     html.H1(children = 'NYC Crime Dashboard', style = {'textAlign': 'center'}),
-
+    html.Hr(),
+    html.Plaintext(children = 'This dashboard is purposed with displaying the relationship between crime in New York City \nand various factors such as the time of day and the population.\nUse the options in order to manipulate the graphs and draw your own conclusions about crime in NYC', style = {'fontSize': '18px', 'textAlign': 'center'}),
     html.Hr(),
 
+
+
+    html.H3(children = 'NYC Crime vs Time of Day', style = {'textAlign': 'center'}),
     html.Div([
         dcc.Graph(
-            id = 'by-borough',
             figure = {
                 'data': [
                     dict(
-                        x = df_count['Hour'],
-                        y = df_count[i],
+                        x = tod_count['Hour'],
+                        y = tod_count[i],
                         name = i,
                         mode = 'lines+markers',
                         marker = {'size':8}
@@ -31,7 +43,7 @@ app.layout = html.Div([
                 ],
                 'layout': dict(
                     title = 'Number of Complaints per Hour by Borough',
-                    xaxis = {'title': 'Hour of the Day'},
+                    xaxis = {'title': 'Hour of the Day', 'tickangle': -90},
                     yaxis = {'title': 'Number of Complaints'},
                     margin = {'l': 60, 'b': 60, 't': 25, 'r': 0},
                     legend = {'x': 0.1, 'y': 1},
@@ -40,23 +52,21 @@ app.layout = html.Div([
             }
         )
     ], style = {'width': '50%', 'display': 'inline-block'}),
-
     html.Div([
         dcc.Graph(
-            id = 'by-complaint-type',
             figure = {
                 'data': [
                     dict(
-                        x = df_count['Hour'],
-                        y = df_count[i],
+                        x = tod_count['Hour'],
+                        y = tod_count[i],
                         name = i,
                         mode = 'lines+markers',
                         marker = {'size':8}
-                    ) for i in ['Total', 'Felony', 'Misdemeanor', 'Violation']
+                    ) for i in ['Felony', 'Misdemeanor', 'Violation', 'Total']
                 ],
                 'layout': dict(
-                    title = 'Number of Complaints per Hour by Complaint Type',
-                    xaxis = {'title': 'Hour of the Day'},
+                    title = 'Number of Complaints per Hour by Crime Type',
+                    xaxis = {'title': 'Hour of the Day', 'tickangle': -90},
                     yaxis = {'title': 'Number of Complaints'},
                     margin = {'l': 60, 'b': 60, 't': 25, 'r': 0},
                     legend = {'x': 0.1, 'y': 1},
@@ -66,64 +76,378 @@ app.layout = html.Div([
         )
     ], style = {'width': '50%', 'display': 'inline-block'}),
 
+
     html.Hr(),
-    
     html.Div([
-        dcc.Graph(id = 'specific-conditions')
+        dcc.Graph(id = 'tod-specific-conditions')
     ], style = {'width': '75%', 'display': 'inline-block'}),
-
     html.Div([
-        html.Label('Borough'),
+        html.Label('Crime Type'),
         dcc.RadioItems(
-            id = 'borough-pick',
-            options = [{'label': i, 'value': i.upper()} for i in ['All Boroughs', 'Manhattan', 'Queens', 'Bronx', 'Brooklyn', 'Staten Island']],
-            value = 'MANHATTAN'
-        ),
-
-        html.Hr(),
-
-        html.Label('Complaint Type'),
-        dcc.RadioItems(
-            id = 'complaint-type-pick',
-            options=[{'label': i, 'value': i.upper()} for i in ['All Complaint Types', 'Felony', 'Misdemeanor', 'Violation']],
+            id = 'tod-crime-type-pick',
+            options=[{'label': i, 'value': i.upper()} for i in ['Felony', 'Misdemeanor', 'Violation']],
             value = 'FELONY'
+        ),
+        html.Hr(),
+        html.Plaintext(children = 'Please give the dashboard a few seconds to \nload after making a selection.', style = {'fontSize': '14px'}),
+        html.Hr(),
+        dcc.Link(children = 'Link to NYPD Complaint Dataframe', href = 'https://data.cityofnewyork.us/Public-Safety/NYPD-Complaint-Data-Current-Year-To-Date-/5uac-w243', target='_blank')
+    ], style={'width': '25%', 'float': 'right', 'display': 'inline-block'}),
+
+
+
+
+    
+    html.Hr(),
+    html.H3(children = 'NYC Crime vs Income', style = {'textAlign': 'center'}),
+    html.Div([
+        dcc.Graph(
+            figure={
+                'data': [
+                    dict(
+                        x = income['Borough'],
+                        y = income[i],
+                        name = i,
+                        type = 'bar'
+                    ) for i in ['Total households', 'Total Arrests']
+                ],
+                'layout': dict(
+                    title = 'Number of Households and Arrests by Borough',
+                    xaxis = {'title': 'Borough', 'tickangle': 0},
+                    yaxis = {'title': 'Number of Households/People'},
+                    margin = {'l': 60, 'b': 40, 't': 25, 'r': 0},
+                    legend = {'x': 0.75, 'y': 0.9},
+                    hovermode = 'closest'
+                )
+            }
         )
-    ], style={'width': '25%', 'float': 'right', 'display': 'inline-block'})
+    ], style = {'width': '50%', 'display': 'inline-block'}),
+    html.Div([
+        dcc.Graph(
+            figure={
+                'data': [
+                    dict(
+                        x = income['Borough'],
+                        y = income[i],
+                        name = i,
+                        type = 'bar',
+                        marker = {'color': '#2ca02c' if i == 'Median household income (dollars)' else '#d62728'}
+                    ) for i in ['Median household income (dollars)', 'Mean household income (dollars)']
+                ],
+                'layout': dict(
+                    title = 'Household Income by Borough',
+                    xaxis = {'title': 'Borough', 'tickangle': 0},
+                    yaxis = {'title': 'Household Income'},
+                    margin = {'l': 60, 'b': 40, 't': 25, 'r': 0},
+                    legend = {'x': 0.6, 'y': 0.9},
+                    hovermode = 'closest'
+                )
+            }
+        )
+    ], style = {'width': '50%', 'display': 'inline-block'}),
+    html.Hr(),
+    html.Div([
+        dcc.Graph(
+            id = 'income-specific-conditions'
+        )
+    ], style = {'width': '60%', 'display': 'inline-block'}),
+    html.Div([
+        html.Div([
+            html.Label('X-axis'),
+            dcc.RadioItems(
+                id = 'income-x-label',
+                options=[{'label': i, 'value': i} for i in ['Total households', 'Total Arrests', 'Median household income (dollars)', 'Mean household income (dollars)']],
+                value = 'Total households'
+            )
+        ], style={'width': '50%', 'display': 'inline-block'}),
+        html.Div([
+            html.Label('Y-axis'),
+            dcc.RadioItems(
+                id = 'income-y-label',
+                options=[{'label': i, 'value': i} for i in ['Total households', 'Total Arrests', 'Median household income (dollars)', 'Mean household income (dollars)']],
+                value = 'Total Arrests'
+            )
+        ], style={'width': '50%', 'float': 'right', 'display': 'inline-block'}),
+        html.Hr(),
+        dcc.Link(children = 'Link to NYPD Arrests Dataframe', href = 'https://data.cityofnewyork.us/Public-Safety/NYPD-Arrests-Data-Historic-/8h9b-rp9u', target='_blank'),
+        html.Hr(),
+        dcc.Link(children = 'Link to NYC Economic Profile Dataframe', href = 'https://popfactfinder.planning.nyc.gov/profile/1188/economic', target='_blank')
+    ], style={'width': '40%', 'float': 'right', 'display': 'inline-block'}),
+    
+    
+
+
+
+    html.Hr(),
+    html.H3(children = 'NYC Crime vs Population', style = {'textAlign': 'center'}),
+    html.Div([
+        dcc.Graph(
+            id = 'pop-specific-conditions'
+        )
+    ], style = {'width': '60%', 'display': 'inline-block'}),
+    html.Div([
+        html.Div([
+            html.Label('X-axis'),
+            dcc.RadioItems(
+                id = 'pop-x-label',
+                options=[
+                    {'label': 'Population', 'value': 'POPULATION'},
+                    {'label': 'Number of Arrests', 'value': 'NUM_ARRESTS'},
+                    {'label': 'Land Area', 'value': 'LAND_AREA'},
+                    {'label': 'Population Density', 'value': 'POP_DENSITY'},
+                    {'label': 'Percent of Arrests per Population', 'value': 'ARRESTS/POPULATION%'},
+                    {'label': 'Number of Arrests per Square Mile', 'value': 'ARRESTS_PER_MILE'},
+                    {'label': 'Number of Arrests per Day', 'value': 'ARRESTS_PER_DAY'}
+                ],
+                value = 'POPULATION'
+            )
+        ], style={'width': '50%', 'display': 'inline-block'}),
+        html.Div([
+            html.Label('Y-axis'),
+            dcc.RadioItems(
+                id = 'pop-y-label',
+                options=[
+                    {'label': 'Population', 'value': 'POPULATION'},
+                    {'label': 'Number of Arrests', 'value': 'NUM_ARRESTS'},
+                    {'label': 'Land Area', 'value': 'LAND_AREA'},
+                    {'label': 'Population Density', 'value': 'POP_DENSITY'},
+                    {'label': 'Percent of Arrests per Population', 'value': 'ARRESTS/POPULATION%'},
+                    {'label': 'Number of Arrests per Square Mile', 'value': 'ARRESTS_PER_MILE'},
+                    {'label': 'Number of Arrests per Day', 'value': 'ARRESTS_PER_DAY'}
+                ],
+                value = 'NUM_ARRESTS'
+            )
+        ], style={'width': '50%', 'float': 'right', 'display': 'inline-block'}),
+        html.Hr(),
+        dcc.Link(children = 'Link to NYPD Arrests Dataframe', href = 'https://data.cityofnewyork.us/Public-Safety/NYPD-Arrests-Data-Historic-/8h9b-rp9u', target='_blank'),
+        html.Hr(),
+        dcc.Link(children = 'Link to NYC Population Dataframe', href = 'https://data.cityofnewyork.us/City-Government/New-York-City-Population-By-Neighborhood-Tabulatio/swpk-hqdp/data', target='_blank')
+    ], style={'width': '40%', 'float': 'right', 'display': 'inline-block'}),
+
+
+
+
+
+    html.Hr(),
+    html.H3(children = 'NYC Crime vs Education', style = {'textAlign': 'center'}),
+    html.Div([
+        dcc.Graph(
+            figure={
+                'data': [
+                    dict(
+                        x = pop['Borough'],
+                        y = pop[i.upper()],
+                        name = i,
+                        type = 'bar'
+                    ) for i in ['POPULATION', 'NUM_ARRESTS']
+                ],
+                'layout': dict(
+                    title = 'Number of Households and Arrests by Borough',
+                    xaxis = {'title': 'Borough', 'tickangle': 0},
+                    yaxis = {'title': 'Number of Households/People'},
+                    margin = {'l': 60, 'b': 40, 't': 25, 'r': 0},
+                    legend = {'x': 0.75, 'y': 0.9},
+                    hovermode = 'closest'
+                )
+            }
+        )
+    ], style = {'width': '50%', 'display': 'inline-block'}),
+    html.Div([
+        dcc.Graph(
+            figure={
+                'data': [
+                    dict(
+                        x = pop['Borough'],
+                        y = pop[i.upper()],
+                        name = i,
+                        type = 'bar'
+                    ) for i in ['POP_DENSITY', 'ARRESTS/POPULATION%', 'ARRESTS_PER_MILE', 'ARRESTS_PER_DAY']
+                ],
+                'layout': dict(
+                    title = 'Household Income by Borough',
+                    xaxis = {'title': 'Borough', 'tickangle': 0},
+                    yaxis = {'title': 'Household Income'},
+                    margin = {'l': 60, 'b': 40, 't': 25, 'r': 0},
+                    legend = {'x': 0.6, 'y': 0.9},
+                    hovermode = 'closest'
+                )
+            }
+        )
+    ], style = {'width': '50%', 'display': 'inline-block'}),
+    html.Div([
+        dcc.Link(children = 'Link to NYC Population Dataframe', href = 'https://data.cityofnewyork.us/City-Government/New-York-City-Population-By-Neighborhood-Tabulatio/swpk-hqdp/data', target='_blank')
+    ], style={'width': '25%', 'float': 'right'}),
+    html.Div([
+        dcc.Link(children = 'Link to NYPD Arrests Dataframe', href = 'https://data.cityofnewyork.us/Public-Safety/NYPD-Arrests-Data-Historic-/8h9b-rp9u', target='_blank'),
+    ], style={'width': '20%', 'float': 'right'}),
+    html.Div([
+        dcc.Link(children = 'Link to NYC Graduation Dataframe', href = 'https://data.cityofnewyork.us/Education/2005-2011-Graduation-Outcomes-Borough-Total-Cohort/di8r-g5w9', target='_blank')
+    ], style={'width': '25%', 'float': 'right'})
 ])
 
+
+
+
+
 @app.callback(
-    dash.dependencies.Output('specific-conditions', 'figure'),
-    [dash.dependencies.Input('borough-pick', 'value'),
-     dash.dependencies.Input('complaint-type-pick', 'value')])
-def update_specific_conditions_graph(borough, complaint_type):
-    if borough == 'ALL BOROUGHS' and complaint_type == 'ALL COMPLAINT TYPES':
-        count = df_count['Total']
-    elif borough == 'ALL BOROUGHS':
-        count = df_count[complaint_type.title()]
-    elif complaint_type == 'ALL COMPLAINT TYPES':
-        count = df_count[borough.title()]
-    else:
-        df_specific = df.loc[(df['BORO_NM'] == borough) & (df['LAW_CAT_CD'] == complaint_type)]
-        count = np.zeros(25)
-        for ind in df_specific.index:
-            hour = int(str(df_specific['CMPLNT_FR_TM'][ind])[0:2])
-            count[hour] += 1
-        count[24] = count[0]
+    dash.dependencies.Output('tod-specific-conditions', 'figure'),
+    [dash.dependencies.Input('tod-crime-type-pick', 'value')])
+def update_tod_graph(complaint_type):
+    subset = tod.loc[(tod['LAW_CAT_CD'] == complaint_type)]
+    total = np.zeros(25)
+    manhattan = np.zeros(25)
+    queens = np.zeros(25)
+    bronx = np.zeros(25)
+    brooklyn = np.zeros(25)
+    staten_island = np.zeros(25)
+    for ind in subset.index:
+        name = tod['BORO_NM'][ind]
+        hour = int(str(tod['CMPLNT_FR_TM'][ind])[0:2])
+        total[hour] += 1
+        if name == 'MANHATTAN':
+            manhattan[hour] += 1
+        if name == 'QUEENS':
+            queens[hour] += 1
+        if name == 'BRONX':
+            bronx[hour] += 1
+        if name == 'BROOKLYN':
+            brooklyn[hour] += 1
+        if name == 'STATEN ISLAND':
+            staten_island[hour] += 1
+    total[24] = total[0]
+    manhattan[24] = manhattan[0]
+    queens[24] = queens[0]
+    bronx[24] = bronx[0]
+    brooklyn[24] = brooklyn[0]
+    staten_island[24] = staten_island[0]
+    hour = ['12AM', '1AM', '2AM', '3AM', '4AM', '5AM', '6AM',
+        '7AM', '8AM', '9AM', '10AM', '11AM', '12PM',
+        '1PM', '2PM', '3PM', '4PM', '5PM', '6PM',
+        '7PM', '8PM', '9PM', '10PM', '11PM', '12.AM']
+    def get_name(i):
+        if total[0] == i[0]:
+            return 'Total'
+        if manhattan[0] == i[0]:
+            return 'Manhattan'
+        if queens[0] == i[0]:
+            return 'Queens'
+        if bronx[0] == i[0]:
+            return 'Bronx'
+        if brooklyn[0] == i[0]:
+            return 'Brooklyn'
+        if staten_island[0] == i[0]:
+            return 'Staten Island'
     return {'data': [
                 dict(
-                    x = df_count['Hour'],
-                    y = count,
+                    x = hour,
+                    y = i,
+                    name = get_name(i),
                     mode = 'lines+markers',
                     marker = {'size':8}
-                )
+                )for i in [manhattan, queens, bronx, brooklyn, staten_island, total]
             ],
             'layout': dict(
-                title = 'Number of {} per Hour in {}'.format(complaint_type.title(), borough.title()),
-                xaxis = {'title': 'Hour of the Day'},
+                title = 'Number of {} per Hour by Borough'.format(complaint_type.title()),
+                xaxis = {'title': 'Hour of the Day', 'tickangle': -90},
                 yaxis = {'title': 'Number of {}'.format(complaint_type.title())},
                 margin = {'l': 60, 'b': 60, 't': 25, 'r': 0},
+                legend = {'x': 0.1, 'y': 1},
                 hovermode = 'closest'
             )}
+
+
+
+
+
+@app.callback(
+    dash.dependencies.Output('income-specific-conditions', 'figure'),
+    [dash.dependencies.Input('income-x-label', 'value'),
+     dash.dependencies.Input('income-y-label', 'value')])
+def update_income_graph(x_label, y_label):
+    def number_to_boro(num):
+        if num == 0:
+            return 'Brooklyn'
+        if num == 1:
+            return 'Bronx'
+        if num == 2:
+            return 'Manhattan'
+        if num == 3:
+            return 'Queens'
+        return 'Staten Island'
+    return {'data': [
+                dict(
+                    x = [income[x_label][i]],
+                    y = [income[y_label][i]],
+                    name = number_to_boro(i),
+                    mode = 'markers',
+                    marker = {'size':15}
+                )for i in [2, 3, 1, 0, 4]
+            ],
+            'layout': dict(
+                title = x_label + ' vs. ' + y_label,
+                xaxis = {'title': x_label, 'tickangle': -90},
+                yaxis = {'title': y_label},
+                margin = {'l': 60, 'b': 60, 't': 25, 'r': 25},
+                legend = {'x': 0.1, 'y': 1},
+                hovermode = 'closest'
+            )}
+
+
+
+
+
+
+@app.callback(
+    dash.dependencies.Output('pop-specific-conditions', 'figure'),
+    [dash.dependencies.Input('pop-x-label', 'value'),
+     dash.dependencies.Input('pop-y-label', 'value')])
+def update_income_graph(x_value, y_value):
+    def number_to_boro(num):
+        if num == 0:
+            return 'Brooklyn'
+        if num == 1:
+            return 'Bronx'
+        if num == 2:
+            return 'Manhattan'
+        if num == 3:
+            return 'Queens'
+        return 'Staten Island'
+    def value_to_label(value):
+        if value == 'POPULATION':
+            return 'Population'
+        if value == 'NUM_ARRESTS':
+            return 'Number of Arrests'
+        if value == 'LAND_AREA':
+            return 'Land Area'
+        if value == 'POP_DENSITY':
+            return 'Population Density'
+        if value == 'ARRESTS/POPULATION%':
+            return 'Percent of Arrests per Population'
+        if value == 'ARRESTS_PER_MILE':
+            return 'Number of Arrests per Square Mile'
+        if value == 'ARRESTS_PER_DAY':
+            return 'Number of Arrests per Day'
+    return {'data': [
+                dict(
+                    x = [pop[x_value][i]],
+                    y = [pop[y_value][i]],
+                    name = number_to_boro(i),
+                    mode = 'markers',
+                    marker = {'size':15}
+                )for i in [2, 3, 1, 0, 4]
+            ],
+            'layout': dict(
+                title = value_to_label(x_value) + ' vs. ' + value_to_label(y_value),
+                xaxis = {'title': value_to_label(x_value), 'tickangle': -90},
+                yaxis = {'title': value_to_label(y_value)},
+                margin = {'l': 60, 'b': 60, 't': 25, 'r': 25},
+                legend = {'x': 0.1, 'y': 1},
+                hovermode = 'closest'
+            )}
+
+
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
