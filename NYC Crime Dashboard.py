@@ -7,11 +7,11 @@ import numpy as np
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-tod = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYPD_Complaint_Data_Clean.csv')
-tod_count = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYPD_Complaint_Data_Count.csv')
-income = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYC_Income_Arrests.csv')
-pop = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYC_Population_vs_Arrests.csv')
-edu = pd.read_csv('C:\\Users\\birju\\Documents\\CS 301\\NYC_Crime_vs_Education.csv')
+tod = pd.read_csv('C:\\Users\\birju\\Documents\\GitHub\\cs301\\NYPD_Complaint_Data_Clean.csv')
+tod_count = pd.read_csv('C:\\Users\\birju\\Documents\\GitHub\\cs301\\NYPD_Complaint_Data_Count.csv')
+income = pd.read_csv('C:\\Users\\birju\\Documents\\GitHub\\cs301\\NYC_Income_Arrests.csv')
+pop = pd.read_csv('C:\\Users\\birju\\Documents\\GitHub\\cs301\\NYC_Population_vs_Arrests.csv')
+edu = pd.read_csv('C:\\Users\\birju\\Documents\\GitHub\\cs301\\NYC_Crime_vs_Education.csv')
 edu = edu.groupby('Borough').median()
 edu.reset_index(inplace=True)
 locations = np.arange(edu.shape[0])
